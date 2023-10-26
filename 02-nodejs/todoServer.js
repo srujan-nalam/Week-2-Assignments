@@ -39,11 +39,84 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-const express = require('express');
-const bodyParser = require('body-parser');
-
-const app = express();
-
-app.use(bodyParser.json());
-
-module.exports = app;
+  const express = require('express');
+  const bodyParser = require('body-parser');
+  
+  const app = express();
+  const PORT = 3000;
+  
+  todos = []
+  
+  app.use(bodyParser.json());
+  
+  app.get('/todos',(req, res) => {
+    return res.status(200).json(todos);
+  })
+  
+  app.get('/todos/:id',(req,res)=> {
+    const id = parseInt(req.params.id);
+    const todo = todos.find( (t) => t.id === id)
+  
+    if(!todo){
+      return res.status(404).json({"error":"Todo Not Found"})
+    }
+  
+    return res.status(200).json(todo)
+  })
+  
+  app.post('/todos',(req,res)=>{
+    const {title, description} = req.body;
+    if( !title || !description ) return res.status(400).json({error : "Both title and desc are required!!"})
+  
+    const todo = {
+      id : Math.floor(Math.random() * 10000),
+      title,
+      description
+    }
+  
+    todos.push(todo)
+  
+    return res.status(201).json(todo)
+  
+  })
+  
+  app.put('/todos/:id',(req,res)=>{
+    const id = parseInt(req.params.id);
+    const todo = todos.find((t) => t.id === id);
+    const {title, description}= req.body;
+  
+    if(!todo){
+      return res.status(404).json({"error":"Todo not found"})
+    }
+    
+    if(title)todo.title = title
+  
+    if(description) todo.description = description
+  
+    return res.status(200).json(todo)
+  })
+  
+  app.delete('/todos',(req,res) => {
+    todos = []
+  
+    return res.status(200).json(todos)
+  });
+  
+  app.delete('/todos/:id',(req,res)=> {
+    const id = parseInt(req.params.id);
+    const todo = todos.find( (t) => t.id === id)
+  
+    if(!todo){
+      return res.status(404).json({"error":"Todo Not Found"})
+    }
+  
+    todos.splice(todo,1)
+    return res.status(204).send()
+  })
+  
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+  
+  // module.exports = app;
+  
