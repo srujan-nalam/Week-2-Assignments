@@ -41,6 +41,7 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs = require("fs")
   
   const app = express();
   const PORT = 3000;
@@ -48,6 +49,21 @@
   todos = []
   
   app.use(bodyParser.json());
+
+  function saveTodos() {
+    fs.writeFileSync('todos.json', JSON.stringify(todos, null, 2), 'utf-8');
+  }
+  
+  function loadTodos() {
+    try {
+      const data = fs.readFileSync('todos.json', 'utf-8');
+      todos = JSON.parse(data);
+    } catch (err) {
+      todos = [];
+    }
+  }
+  
+  loadTodos();
   
   app.get('/todos',(req, res) => {
     return res.status(200).json(todos);
@@ -75,6 +91,8 @@
     }
   
     todos.push(todo)
+
+    saveTodos();
   
     return res.status(201).json(todo)
   
@@ -92,31 +110,39 @@
     if(title)todo.title = title
   
     if(description) todo.description = description
+
+    saveTodos();
   
     return res.status(200).json(todo)
   })
   
   app.delete('/todos',(req,res) => {
     todos = []
-  
+    saveTodos();
     return res.status(200).json(todos)
   });
   
   app.delete('/todos/:id',(req,res)=> {
     const id = parseInt(req.params.id);
-    const todo = todos.find( (t) => t.id === id)
+    const todo = todos.findIndex( (t) => t.id === id)
   
     if(!todo){
       return res.status(404).json({"error":"Todo Not Found"})
     }
   
     todos.splice(todo,1)
+
+    saveTodos();
     return res.status(204).send()
+  })
+
+  app.use((req,res,nex) => {
+    return res.status(404).send()
   })
   
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
   
-  // module.exports = app;
+  module.exports = app;
   
